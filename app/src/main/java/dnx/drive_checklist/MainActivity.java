@@ -8,8 +8,9 @@ import android.view.View;
 import android.widget.EditText;
 
 public class MainActivity extends AppCompatActivity {
-    // User identifier
-    String user_id = "";
+    // User's identifier
+    private String user_id = "";
+    private String spreadsheet_id = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -18,19 +19,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.login);
     }
 
-    /*
+    /**
      * Click event on login button
      */
     public void loginOnClick(View view)
     {
         EditText user_id_edit = findViewById(R.id.user_id);
-        String user_id =  user_id_edit.getText().toString();
+        user_id =  user_id_edit.getText().toString();
 
-        EditText url_edit = findViewById(R.id.url);
-        String url = url_edit.getText().toString();
+        EditText spreadsheet_id_edit = findViewById(R.id.spreadsheet_id);
+        spreadsheet_id = spreadsheet_id_edit.getText().toString();
 
-        if(user_id != "" && url != "") {
+        // Verifies that both fields have been filled in
+        if(user_id != "" && spreadsheet_id != "") {
             Intent intent = new Intent(this, ChecklistActivity.class);
+            intent.putExtra("user_id", user_id);
+            intent.putExtra("spreadsheet_id", spreadsheet_id);
+            startActivity(intent);
         }
     }
 }
