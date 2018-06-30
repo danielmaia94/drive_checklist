@@ -29,16 +29,14 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +44,7 @@ import java.util.List;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class ChecklistActivity extends Activity
+public class ReadChecklistActivity extends Activity
         implements EasyPermissions.PermissionCallbacks {
     GoogleAccountCredential credential;
     ProgressDialog progress;
@@ -108,10 +106,8 @@ public class ChecklistActivity extends Activity
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
 
-        getResultsFromApi();
+        getResultsFromApi(this);
     }
-
-
 
     /**
      * Attempt to call the API, after verifying that all the preconditions are
@@ -120,7 +116,7 @@ public class ChecklistActivity extends Activity
      * of the preconditions are not satisfied, the app will prompt the user as
      * appropriate.
      */
-    private void getResultsFromApi() {
+    private void getResultsFromApi(Context context) {
         if (! isGooglePlayServicesAvailable()) {
             acquireGooglePlayServices();
         } else if (credential.getSelectedAccountName() == null) {
@@ -128,7 +124,7 @@ public class ChecklistActivity extends Activity
         } else if (! isDeviceOnline()) {
             output_text.setText("No network connection available.");
         } else {
-            new MakeRequestTask(credential).execute();
+           new MakeRequestTask(credential, context).execute();
         }
     }
 
@@ -150,7 +146,7 @@ public class ChecklistActivity extends Activity
                     .getString(PREF_ACCOUNT_NAME, null);
             if (accountName != null) {
                 credential.setSelectedAccountName(accountName);
-                getResultsFromApi();
+                getResultsFromApi(this);
             } else {
                 // Start a dialog from which the user can choose an account
                 startActivityForResult(
@@ -188,7 +184,7 @@ public class ChecklistActivity extends Activity
                             "This app requires Google Play Services. Please install " +
                                     "Google Play Services on your device and relaunch this app.");
                 } else {
-                    getResultsFromApi();
+                    getResultsFromApi(this);
                 }
                 break;
             case REQUEST_ACCOUNT_PICKER:
@@ -203,13 +199,13 @@ public class ChecklistActivity extends Activity
                         editor.putString(PREF_ACCOUNT_NAME, accountName);
                         editor.apply();
                         credential.setSelectedAccountName(accountName);
-                        getResultsFromApi();
+                        getResultsFromApi(this);
                     }
                 }
                 break;
             case REQUEST_AUTHORIZATION:
                 if (resultCode == RESULT_OK) {
-                    getResultsFromApi();
+                    getResultsFromApi(this);
                 }
                 break;
         }
@@ -305,7 +301,7 @@ public class ChecklistActivity extends Activity
             final int connectionStatusCode) {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
         Dialog dialog = apiAvailability.getErrorDialog(
-                ChecklistActivity.this,
+                ReadChecklistActivity.this,
                 connectionStatusCode,
                 REQUEST_GOOGLE_PLAY_SERVICES);
         dialog.show();
@@ -315,12 +311,14 @@ public class ChecklistActivity extends Activity
      * An asynchronous task that handles the Google Sheets API call.
      * Placing the API calls in their own task ensures the UI stays responsive.
      */
-    private class MakeRequestTask extends AsyncTask<Void, Void, List<String>>
+    private class MakeRequestTask extends AsyncTask<Void, Void, List<List<Object>>>
     {
         private com.google.api.services.sheets.v4.Sheets service = null;
         private Exception last_error = null;
+        private List<List<Object>> sheet_data = null;
+        Context context;
 
-        MakeRequestTask(GoogleAccountCredential credential)
+        MakeRequestTask(GoogleAccountCredential credential, Context context)
         {
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -328,6 +326,9 @@ public class ChecklistActivity extends Activity
                     transport, jsonFactory, credential)
                     .setApplicationName("Google Sheets API Android Quickstart")
                     .build();
+
+            // Execution context
+            this.context = context;
         }
 
         /**
@@ -335,7 +336,7 @@ public class ChecklistActivity extends Activity
          * @param params no parameters needed for this task.
          */
         @Override
-        protected List<String> doInBackground(Void... params)
+        protected List<List<Object>> doInBackground(Void... params)
         {
             try {
                 return getDataFromApi();
@@ -351,23 +352,16 @@ public class ChecklistActivity extends Activity
          * @return checklist
          * @throws IOException
          */
-        private List<String> getDataFromApi() throws IOException
+        private List<List<Object>> getDataFromApi() throws IOException
         {
             String range = "Perguntas!A1:B";
-            List<String> results = new ArrayList<String>();
             ValueRange response = this.service.spreadsheets().values()
                     .get(spreadsheet_id, range)
                     .execute();
-            List<List<Object>> values = response.getValues();
-            if (values != null) {
-                for (List row : values) {
-                    results.add(row.get(0) + ", ");
-                }
-            }
-            return results;
+            sheet_data = response.getValues();
+
+            return sheet_data;
         }
-
-
 
         @Override
         protected void onPreExecute()
@@ -377,14 +371,16 @@ public class ChecklistActivity extends Activity
         }
 
         @Override
-        protected void onPostExecute(List<String> output)
+        protected void onPostExecute(List<List<Object>> output)
         {
             progress.hide();
             if (output == null || output.size() == 0) {
                 output_text.setText("Questionário não encontrado");
             } else {
-                output.add(0, "Data retrieved using the Google Sheets API:");
-                output_text.setText(TextUtils.join("\n", output));
+                Intent intent = new Intent(context, DrawChecklistActivity.class);
+
+                intent.putExtra("sheet_data", (Serializable)sheet_data);
+                startActivity(intent);
             }
         }
 
@@ -400,7 +396,7 @@ public class ChecklistActivity extends Activity
                 } else if (last_error instanceof UserRecoverableAuthIOException) {
                     startActivityForResult(
                             ((UserRecoverableAuthIOException) last_error).getIntent(),
-                            ChecklistActivity.REQUEST_AUTHORIZATION);
+                            ReadChecklistActivity.REQUEST_AUTHORIZATION);
                 } else {
                     output_text.setText("The following error occurred:\n"
                             + last_error.getMessage());

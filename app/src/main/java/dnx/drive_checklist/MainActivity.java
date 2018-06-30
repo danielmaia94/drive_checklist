@@ -3,7 +3,6 @@ package dnx.drive_checklist;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
@@ -32,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Verifies that both fields have been filled in
         if(user_id != "" && spreadsheet_id != "") {
-            Intent intent = new Intent(this, ChecklistActivity.class);
+            Intent intent = new Intent(this, ReadChecklistActivity.class);
             intent.putExtra("user_id", user_id);
             intent.putExtra("spreadsheet_id", spreadsheet_id);
             startActivity(intent);

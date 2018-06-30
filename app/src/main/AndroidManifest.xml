@@ -20,7 +20,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ChecklistActivity"></activity>
+        <activity android:name=".ReadChecklistActivity" />
+        <activity android:name=".DrawChecklistActivity"></activity>
     </application>
 
 </manifest>
