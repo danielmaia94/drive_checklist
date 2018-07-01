@@ -21,7 +21,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".ReadChecklistActivity" />
-        <activity android:name=".DrawChecklistActivity"></activity>
+        <activity android:name=".DrawChecklistActivity" />
+        <activity android:name=".WriteChecklistActivity"></activity>
     </application>
 
 </manifest>

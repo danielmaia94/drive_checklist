@@ -381,6 +381,7 @@ public class ReadChecklistActivity extends Activity
 
                 intent.putExtra("sheet_data", (Serializable)sheet_data);
                 startActivity(intent);
+                finish();
             }
         }
 
