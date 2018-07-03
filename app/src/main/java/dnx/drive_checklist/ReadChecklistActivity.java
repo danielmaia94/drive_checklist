@@ -30,14 +30,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,9 +56,8 @@ public class ReadChecklistActivity extends Activity
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
 
-    private static final String BUTTON_TEXT = "Call Google Sheets API";
     private static final String PREF_ACCOUNT_NAME = "accountName";
-    private static final String[] SCOPES = { SheetsScopes.SPREADSHEETS_READONLY };
+    private static final String[] SCOPES = { SheetsScopes.SPREADSHEETS };
 
     /**
      * Create the main activity.
@@ -380,6 +377,9 @@ public class ReadChecklistActivity extends Activity
                 Intent intent = new Intent(context, DrawChecklistActivity.class);
 
                 intent.putExtra("sheet_data", (Serializable)sheet_data);
+                intent.putExtra("user_id", user_id);
+                intent.putExtra("spreadsheet_id", spreadsheet_id);
+                ((CustomApplication) getApplication()).setCredential(credential);
                 startActivity(intent);
                 finish();
             }

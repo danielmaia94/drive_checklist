@@ -18,13 +18,18 @@ public class DrawChecklistActivity extends AppCompatActivity {
     private int current_question = 0;
     private List<List<Object>> sheet_data;
     private List<String> answers =  new ArrayList<String>();
+    private String user_id;
+    private String spreadsheet_id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Intent i = getIntent();
+        Bundle extras = i.getExtras();
         sheet_data = (List<List<Object>>) i.getSerializableExtra("sheet_data");
+        user_id = extras.getString("user_id");
+        spreadsheet_id = extras.getString("spreadsheet_id");
 
         setContentView(R.layout.checklist);
         drawQuestion();
@@ -71,7 +76,8 @@ public class DrawChecklistActivity extends AppCompatActivity {
                             Intent intent = new Intent(context, WriteChecklistActivity.class);
 
                             intent.putExtra("answers", (Serializable)answers);
-                            intent.putExtra("sheet_data", (Serializable)sheet_data);
+                            intent.putExtra("user_id", user_id);
+                            intent.putExtra("spreadsheet_id", spreadsheet_id);
                             startActivity(intent);
                             finish();
                         } else {
